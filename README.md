@@ -6,3 +6,5 @@
 3. [闭包面向对象测试](闭包面向对象测试.md)
 4. [面向对象深入理解](面向对象深入理解.md)
 5. [关于this总结](关于this总结.md)
+6. [测试练习](https://github.com/smileyby/product-sort)
+7. [正则](正则.md)
