@@ -194,3 +194,212 @@ function getCss(curEle, attr){
 }
 ```
 
+```javascript
+//=> 设置元素的样式
+// curEle.style.xxx = xxx; 设置当前元素的行内样式（JS中设置的样式一般都要设置在行内样式上：行内样式上优先级最大）
+// curEle.className = xxx; 设置元素的样式类名
+
+function setCss(curEle, attr, value){
+	//=> 如果传递的value值没有单位，我们根据需求自动补充单位
+	//=> 需要补充单位的常用样式属性：width/height/margin/padding/top/left/right/bottom
+	//=> 2、并不是所有的样式属性传递进来的值都要补充单位
+	//=> 2、传递的值已经存在单位，我们不需要再补充，没有单位我们再补充
+	var reg = /^(width|height|((margin|padding)?(top|left|right|bottom)?)|borderWidth)$/i;
+	if(reg.test(value)){
+		if(!isNaN(value)){
+			value =+ 'px';
+		}
+	}
+	curEle['style'][attr] = value;
+}
+```
+
+```javascript
+//=> 反思路验证：传递的是纯数字，大部分都需要家单位，但是某些特殊的样式属性是不需要加单位的
+//=> 不需要加单位：zIndex、zoom、lineHeight
+//=> 如果传递的是opacity，我们需要兼容处理
+
+function setCss(curEle, attr, value){
+	
+	if(attr === 'opacity'){
+		curEle.style.opacity = value;
+		curEle.style.filter = 'alpha(opacity='+ value * 100 +')';
+		return;
+	}
+	isNaN(value) && !/^(zIindex|zoom|lineHeight)$/i.test(value) ? value += 'px' : null;
+	
+	curEle['style'][attr] = value;
+}
+
+//=> 批量设置样式
+function setGroupCss(curEle, options){
+	if(Object.prototype.toString.call(options) === '[object Object]'){
+		return;
+	}
+	
+	for(var key in options){
+		if(options.hasOwnProperty(attr)){
+			setCss(curEle, attr, options[attr]);
+		}
+	}
+}
+```
+
+```javascript
+//=> 封装css方法，实现设置，批量设置获取元素
+var utils = function(){
+	//=> 获取元素的css属性
+	var getCss = function(curEle, attr){
+		var valur = null,
+			reg = null;
+		if (window.getComputedStyle){
+			value = window.getComputedStyle(curEle, null);
+		} else {
+			if(attr = 'opacity'){
+				value = curEle.currentStyle['filter'];
+				reg = /^alpha\(opacity=(.+)\)$/i;
+				value = reg.test(value) ? reg.exec(value)[1] / 100 : 1;
+			} else {
+				value = curEle.currentStyle[attr];
+			} 
+		}
+		var reg = /^-?\d+(\.\d+)?(px|pt|rem|em)?$/i;
+		reg.test(value) ? value = parseFloat(value) : null;
+		return value;
+	};
+	
+	//=> 设置元素的css属性
+	var setCss = function(curEle, attr, value){
+		if(attr === 'opacity'){
+			curEle['style']['opacity'] = value;
+			curEle['style']['filter'] = 'alpha(opacity='+ value * 100 +')';
+			return;
+		}
+		isNaN(value) && !/^(zIndex|zoom|lineHeight|fontWeight)$/i.test(attr) ? value += 'px' : null;
+		curEle['style'][attr] = value;
+	};
+	
+	//=> 批量设置元素css属性
+	var setGroupCss = function(curEle, options){
+		if(Object.prototype.toString.call(options) === '[object Oject]'){
+			reutrn;
+		}
+	
+		for(var attr in options){
+			if(options.hasOwnProperty(attr)){
+				setCss(curEle, attr, options[attr]);
+			}
+		}
+	};
+	
+	//=> 集成获取样式，设置样式
+	var css = function(){
+		var len = arguments.length;
+		if(len >= 3){
+			//=> setting styles
+			setCss.apply(this, arguments)
+			return;
+		};
+	
+		if(len === 2 && Object.prototype.toString.call(arguments[1]) === '[object Object]'){
+			setGroupCss.apply(this, arguments);
+			return;
+		};
+	
+		return getCss.apply(this, arguments);
+	};
+
+	//=> css优化版本
+	var css = function(){
+		var len = arguments.length,
+			type = Object.prototype.toString.call(arguments[1]),
+			fn = getCss;
+		len >= 3 ? fn = setCss : len === 2 && type === '[object Object]' ? fn = setGroupCss : null;
+	
+		return fn.apply(this, arguments);
+	};
+	
+	return {
+		css: css
+	}
+	
+}();
+```
+
+**`offsetParent: 父级参照物`**
+
+> 父级参照物不等价于父级元素：父级参照物和它的父级元素没有直接关系
+> 父级参照物：同一个平面中最外层的容器是所有盒子的父级参照物
+> 
+> 默认情况下，一个页面中所有元素的父级参照物都是body（而body的父级参照物是null）
+> 
+> 当我们给元素设置定位之后会改变元素的参照物（因为设置定位会让元素脱离文档流 ）
+
+**`offsetLeft offsetTop`**
+
+> 当前元素的外边框 距离 父级参照物的内边框 的偏移量（左偏移、上偏移）
+> 
+> 标准IE8浏览器有特殊性：它的偏移量是从当前元素的外边框到父级参照物的外边框
+
+```javascript
+//=> 封装获取任意元素到body的距离
+//=> 思路：首先获取自己的偏移量和自己的父级参照物，如果自己的父级参照物不是body，我们加上父级参照物的边框和偏移量...直到某一次找到的父级参照物是body为止
+
+
+var utils = function(){
+	//=> 获取当前元素距离body的偏移量，包括左偏移和上便宜
+	var offset = function(curEle){
+		var l = curEle.offsetLeft,
+			t = curEle.offsetTop,
+			p = curEle.offsetParent;
+		while(p.tagName !== 'BODY'){
+			//=> 兼容IE8
+			if(!/MSIE 8/i.test(navigator.userAgent)){
+				l += p.clientLeft;
+				t += p.clientTop;
+			}
+	
+			l += p.offsetLeft;
+			t += p.offsetTop;
+			p = curEle.offsetParent;
+		}
+	
+		return {left:l, top: t}
+	};
+	
+	return {
+		offset: offset
+	}
+}();
+```
+
+**`scrollLeft scrollTop`**
+
+> scrollLeft: 横向滚动条卷去的宽度
+> 
+> scrollTop: 竖向滚动条卷去的高度
+> 
+> 最小值: 0
+> 最大值: scrollHeight - clientHeight 页面真实高度减去一屏幕高度
+
+**前面JS盒子模型属性都是`只读属性`：只能通过属性获取值，不可以修改属性值（修改不生效），但`scrollLeft scrollTop`是可读写属性，可以设置和修改**
+
+```javascript
+document.documentElement.scrollTop || document.body.scrollTop;
+
+document.documentElement.scrollLeft || document.body.scrollLeft;
+```
+
+```javascript
+//=> 操作所有关于浏览器盒子模型属性，处理兼容
+var utils = function(){
+	var winBox = function(attr, value){
+		if(typeod value !== 'undefined'){
+			document.documentElement[attr] = value;
+			document.body[attr] = value;
+			return;
+		}
+		return document.documentElement[attr] || document.body[attr];
+	};
+}();
+```
