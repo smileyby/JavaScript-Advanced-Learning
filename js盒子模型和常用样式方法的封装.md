@@ -394,7 +394,7 @@ document.documentElement.scrollLeft || document.body.scrollLeft;
 //=> 操作所有关于浏览器盒子模型属性，处理兼容
 var utils = function(){
 	var winBox = function(attr, value){
-		if(typeod value !== 'undefined'){
+		if(typeof value !== 'undefined'){
 			document.documentElement[attr] = value;
 			document.body[attr] = value;
 			return;
@@ -403,3 +403,7 @@ var utils = function(){
 	};
 }();
 ```
+
+回到顶部小案例：[https://codepen.io/smileyby/pen/aaoQxm](https://codepen.io/smileyby/pen/aaoQxm)
+
+
