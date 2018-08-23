@@ -233,3 +233,7 @@ function getElementsByClassName(context, strClass){
 	//=> 下面代码同上
 }
 ```
+
+## 基于惰性思想的高级单例模式的作用和优势
+
+> 什么是惰性思想：能够一次解决的，绝不会重复处理，属于JS的一种优化
