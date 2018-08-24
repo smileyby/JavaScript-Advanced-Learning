@@ -237,3 +237,43 @@ function getElementsByClassName(context, strClass){
 ## 基于惰性思想的高级单例模式的作用和优势
 
 > 什么是惰性思想：能够一次解决的，绝不会重复处理，属于JS的一种优化
+> 
+> + 生成闭包，存储以后经常用到的变量
+> + 控制函数的内外部使用
+
+```javascript
+var utils = (function(){
+	var flag = xxx;
+	function setCss(){};
+	function getCss(){};
+	function css(){
+		getCss();
+		setCss();
+	}
+
+	return {
+		css: css
+	}
+})();
+//=> 其中getCss和setCss方法都没有暴露出来，只供css内部使用
+```
+
+### DOM封装-惰性思想函数重写
+
+```javascript
+function getCss(){
+	if(windw.getComputedStyle){
+		getCss = function(curEle, attr){
+			return window.getComputedStyle(curEle, null)[attr]
+		}
+	}else{
+		getCss = function(curEle, attr){
+			return curEle.currentStyle[attr]
+		}
+	}
+	return getCss(curEle, attr);
+}
+
+//=> getCss第一次执行大方法，判断是标准浏览器还是非标准浏览器
+//=> 下一次带调用getCss方法的时候，getCss已经被改写，不需要进行重复的判断
+```
