@@ -277,3 +277,76 @@ function getCss(){
 //=> getCss第一次执行大方法，判断是标准浏览器还是非标准浏览器
 //=> 下一次带调用getCss方法的时候，getCss已经被改写，不需要进行重复的判断
 ```
+
+### 使用前面封装的getElementsByClassName和children方法重写选项卡
+
+```javascript
+//=> 这样写仍然存在弊端，每次想要写选项卡的时候都需要把下面的代码重写一次，很繁琐
+
+var utils = (function(){
+  var getElementsByClassName = function(context, className){
+    context = context || document;
+    className = className.split(/ +/g);
+    var nodeList = context.getElementsByTagName('*'),
+       result = [];
+    for(var i = 0; i < nodeList.length; i += 1){
+      var item = nodeList[i],
+         itemClassName = item.className,
+         flag = true;
+      for(var k = 0; k < className.length; k += 1){
+        var reg = new RegExp('(^| +)'+ className[k] +'( +|$)');
+        if(!reg.test(itemClassName)){
+          flag = false;
+          break;
+        }
+      }
+      flag ? result.push(nodeList[i]) : null;
+    }
+    return result;
+  };
+  var children = function(context, tagName){
+    if(typeof context === 'undefined'){return;}
+    tagName = tagName.toLowerCase();
+    var childList = context.childNodes,
+       result = [];
+    for(var i = 0; i < childList.length; i += 1){
+      var item = childList[i];
+      if(item.nodeType === 1){
+        if(item.tagName.toLowerCase() === tagName){
+          result.push(item);
+        }else{
+          //=> 没有传递标签名，则默认返回全部儿子元素
+          result.push(item);
+        }
+      }
+    }
+    return result;
+  };
+  
+  return {
+    getElementsByClassName: getElementsByClassName,
+    children: children
+  }
+})();
+
+var box = document.getElementById('box'),
+   tab = utils.getElementsByClassName(box, 'tab')[0],
+   tabBox = utils.getElementsByClassName(box, 'tabBox')[0],
+   tabList = utils.children(tab, 'li'),
+   conList = utils.children(tabBox, 'div'),
+   _prevIndex = 0;
+
+for(var i = 0; i < tabList.length; i += 1){
+  tabList[i].myIndex = i;
+  tabList[i].onclick = function(){
+    tabList[_prevIndex].className = null;
+    conList[_prevIndex].className = 'con';
+    this.className = 'select';
+    conList[this.myIndex].className = 'con select';
+    _prevIndex = this.myIndex;
+  }
+}
+```
+
+[https://codepen.io/smileyby/pen/YOyLxG](https://codepen.io/smileyby/pen/YOyLxG)
+
