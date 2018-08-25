@@ -348,5 +348,19 @@ for(var i = 0; i < tabList.length; i += 1){
 }
 ```
 
-[https://codepen.io/smileyby/pen/YOyLxG](https://codepen.io/smileyby/pen/YOyLxG)
+[选项卡-记录上一次点击下标](https://codepen.io/smileyby/pen/YOyLxG)
+
+[选项卡功能封装-多选项卡实现](https://codepen.io/smileyby/pen/KxVWex)
+
+> 插件封装：
+> 
+> 1. 必用构造函数
+> 2. 所有信息传递都用this（实例）
+> 3. 尽可能提供更多可变性
+> 4. 保持独立性
+> 5. 可扩展性强
+
+**小技巧：为了保证函数中用到的变量值，在类的任何方法中都可以使用，我们一般都把信息存放在当前实例上（即this），只要保证每个方法中的this都是当前类的实例，我们就可以获取这些变量值**
+
+[选项卡-插件封装](https://codepen.io/smileyby/pen/KxVWex)
 
